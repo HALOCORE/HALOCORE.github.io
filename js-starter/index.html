@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>javascript starter</title>
+    <link rel="stylesheet" href="lib/codemirror.css">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <button id="maincode-run-button" onclick="maincodeRun()">运行</button>
+    <button id="clear-log-button" onclick="logClearRun()">清除输出</button>
+    <div id="maincode-input-wrapper">
+        <textarea id="maincode-input" name="maincode-input">
+print("hello world");
+let a = inputNumber("请输入一个数值", 3.14);
+a = a + 1; //这后面是注释, 计算等号右边a+1得到6, 赋值给等号左边的a, a变为6
+let b = a * a + 3 / 2;
+let c = Math.floor(b); //这后面是注释, Math.floor向下取整
+print(a, b, c, "print里可以放多个", "英文逗号隔开");
+</textarea>
+    </div>
+    <div id="msg-board"></div>
+    <div id="more-info-board">
+        <h4>最后一次执行的代码:</h4>
+        <div id="last-code-board">(未执行过)</div>
+    </div>
+    <script src="lib/codemirror.js"></script>
+    <script src="lib/codemirror-javascript.js"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>

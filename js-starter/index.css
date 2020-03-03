@@ -1,0 +1,29 @@
+#msg-board {
+  margin: 10px;
+  font-size: 14px;
+  background: whitesmoke;
+  border: 1px solid gray;
+  height: 300px;
+  overflow-y: scroll;
+}
+#maincode-input {
+  width: calc(100% - 25px);
+  margin-left: 10px;
+  background: whitesmoke;
+  height: 300px;
+}
+#maincode-run-button,
+#clear-log-button {
+  width: 120px;
+  height: 50px;
+  font-size: 22px;
+  margin: 10px;
+}
+
+#more-info-board {
+    margin: 10px;
+}
+
+#maincode-input-wrapper {
+    font-size: 16px;
+}
