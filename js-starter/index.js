@@ -1,9 +1,23 @@
+var maincodeEditor;
+window.onload = () => {
+    maincodeEditor = CodeMirror.fromTextArea(document.getElementById("maincode-input"), {
+        lineNumbers: true,
+        readOnly: false,
+        styleActiveLine: true,
+        matchBrackets: true
+    });
+    document.querySelector("#maincode-run-button").disabled = false;
+    document.querySelector("#debugcode-run-button").disabled = false;
+    document.querySelector("#clear-log-button").disabled = false;
+    document.querySelector("#loading-text").style.display = "none";
+}
+
 function print() {
     let msgbd = document.querySelector("#msg-board");
     let elem = document.createElement("div");
     let numargs = arguments.length;
     let msgstr = "";
-    for(let i=0; i<numargs; i++) msgstr += arguments[i].toString() + " ";
+    for (let i = 0; i < numargs; i++) msgstr += arguments[i].toString() + " ";
     elem.innerText = msgstr;
     if (msgstr.indexOf("[INFO]") >= 0) elem.style.color = "blue";
     if (msgstr.indexOf("[OK]") >= 0) elem.style.color = "green";
@@ -11,6 +25,11 @@ function print() {
     if (msgstr.indexOf("[ERROR]") >= 0) elem.style.color = "red";
     msgbd.appendChild(elem);
     msgbd.scrollTop = msgbd.scrollHeight;
+}
+
+function _debug_break(lineStart, colStart, lineEnd, colEnd) {
+    console.log("_debug_break AT:", lineStart, lineEnd);
+    //maincodeEditor.setLineClass(lineStart, 'background', 'line-error');
 }
 
 function inputNumber(msg, defaultValue) {
@@ -44,6 +63,69 @@ function codeCheck(codes) {
     }
 }
 
+function debugCodeGen(codes) {
+    function statementBreaksInjector({ types: t }) {
+        return {
+            visitor: {
+                ExpressionStatement(path) {
+                    let exprType = path.node.expression.type;
+                    let loc = path.node.expression.loc;
+                    if (loc === undefined) return;
+                    if (exprType === 'AssignmentExpression' || exprType === 'CallExpression') {
+                        console.log("Visit Expression Type: ", exprType, ", loc: ", loc);
+                        path.insertBefore(t.yieldExpression(
+                            t.callExpression(t.identifier("_debug_break"),
+                                [t.numericLiteral(loc['start']['line']), t.numericLiteral(loc['start']['column']), 
+                                t.numericLiteral(loc['end']['line']), t.numericLiteral(loc['end']['column'])])
+                        ), false);
+                    } else {
+                        console.log("UNKNOWN Expression Type:", exprType, ", loc: ", loc);
+                    }
+                }
+            }
+        };
+    }
+    const result = Babel.transform(codes, {
+        plugins: [statementBreaksInjector]
+    });
+    let finalCode = "(function* _debug_generator(){\n  CODES \n})".replace("CODES", result.code);
+    console.log("=========== DEBUG CODE ===========");
+    console.log(finalCode);
+    let dgen = eval(finalCode);
+    return dgen;
+}
+
+let debugInterval = 200;
+function debugcodeRun() {
+    let tarea = document.getElementById("maincode-input");
+    tarea.value = maincodeEditor.getValue();
+    let codes = tarea.value;
+    codeCheck(codes);
+    document.querySelector("#last-code-board").innerText = codes;
+    console.log(codes);
+    try {
+        let dgen = debugCodeGen(codes);
+        let dgenIt = dgen();
+        print("[INFO] 调试代码生成成功.");
+        function debugStepHandler() {
+            let yieldVal = null;
+            try{
+                yieldVal = dgenIt.next();
+            } catch(e) {
+                print("[ERROR] " + e.message);
+                console.log(e);
+            }
+            if (yieldVal !== null && yieldVal.done === false) {
+                setTimeout(debugStepHandler, debugInterval);
+            }
+        }
+        setTimeout(debugStepHandler, debugInterval);
+    } catch (e) {
+        print("[ERROR] 调试代码生成失败: " + e.message);
+        console.log(e);
+    }
+}
+
 function maincodeRun() {
     let tarea = document.getElementById("maincode-input");
     tarea.value = maincodeEditor.getValue();
@@ -51,13 +133,11 @@ function maincodeRun() {
     codeCheck(codes);
     document.querySelector("#last-code-board").innerText = codes;
     console.log(codes);
-    try{
+    try {
         print("[INFO] 开始.");
         eval(codes);
         print("[OK] 运行结束.");
-        // let func = new Function(codes);
-        // func();
-    } catch(e) {
+    } catch (e) {
         print("[ERROR] " + e.message);
         console.log(e);
     }
@@ -67,17 +147,4 @@ function logClearRun() {
     let msgbd = document.querySelector("#msg-board");
     msgbd.innerHTML = "";
     msgbd.scrollTop = msgbd.scrollHeight;
-}
-
-var maincodeEditor;
-window.onload = () => {
-    maincodeEditor = CodeMirror.fromTextArea(document.getElementById("maincode-input"), {
-        lineNumbers: true,
-        readOnly: false,
-        styleActiveLine: true,
-        matchBrackets: true
-    });
-    document.querySelector("#maincode-run-button").disabled = false;
-    document.querySelector("#clear-log-button").disabled = false;
-    document.querySelector("#loading-text").style.display = "none";
 }

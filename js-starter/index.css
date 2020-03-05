@@ -5,6 +5,8 @@
   border: 1px solid gray;
   height: 300px;
   overflow-y: scroll;
+  white-space: pre-wrap;
+  padding: 3px;
 }
 #maincode-input {
   width: calc(100% - 25px);
@@ -13,6 +15,7 @@
   height: 300px;
 }
 #maincode-run-button,
+#debugcode-run-button,
 #clear-log-button {
   width: 120px;
   height: 50px;
@@ -22,6 +25,7 @@
 
 #more-info-board {
     margin: 10px;
+    white-space: pre-wrap;
 }
 
 #maincode-input-wrapper {

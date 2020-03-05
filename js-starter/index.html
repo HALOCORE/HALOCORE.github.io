@@ -11,20 +11,28 @@
 
 <body>
     <button id="maincode-run-button" onclick="maincodeRun()" disabled>运行</button>
+    <button id="debugcode-run-button" onclick="debugcodeRun()" disabled>调试运行</button>
     <button id="clear-log-button" onclick="logClearRun()" disabled>清除输出</button>
     <span id="loading-text">Loading...</span>
     <div id="maincode-input-wrapper">
         <textarea id="maincode-input" name="maincode-input">
-//弹窗输入
-let s = inputString("请输入一个字符串", "hello world");
-let a = inputNumber("请输入一个数值", 3.5);
+let a = inputNumber("请输入a", 0);
+let sum = 0;
+let prod = 1;
 
-//计算和输出
-print(s);
-a = a + 1; //这后面是注释, 计算等号右边a+1得到6, 赋值给等号左边的a, a变为6
-let b = a * a + 3 / 2;
-let c = Math.floor(b); //这后面是注释, Math.floor向下取整
-print(a, b, c, "print里可以放多个", "英文逗号隔开");
+for(let i = 1; i <= a; i++) {
+  sum = sum + i;
+  prod = prod * i;
+  if (Math.floor(sum / 2) === sum / 2) {
+    print("偶数sum", sum);
+  } else {
+    print("奇数sum", sum);
+  }
+  print("乘积", prod);
+}
+
+print("最终和为", sum);
+print("最终积为", sum);
 </textarea>
     </div>
     <div id="msg-board"></div>
