@@ -1,0 +1,12 @@
+- Math.PI 数学pi
+- Math.floor(x) x的向下取整
+- Math.ceil(x) x的向上取整
+- Math.round(x) x的四舍五入
+- Math.abs(x) x的绝对值
+- Math.pow(x, p) x的p次方 
+- Math.min(x1, x2, .... xn)  x1,... xn中的最小值
+- Math.max(x1, x2, .... xn)  x1,... xn中的最大值
+- Math.sign(x) 若x为正数,返回1;若负数,返回-1;若0,返回0
+- Math.trunc(x) x的整数部分
+
+- Math.random

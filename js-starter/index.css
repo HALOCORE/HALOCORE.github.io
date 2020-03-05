@@ -27,3 +27,8 @@
 #maincode-input-wrapper {
     font-size: 16px;
 }
+
+#loading-text {
+  font-size: 20px;
+  margin: 20px;
+}

@@ -77,4 +77,7 @@ window.onload = () => {
         styleActiveLine: true,
         matchBrackets: true
     });
+    document.querySelector("#maincode-run-button").disabled = false;
+    document.querySelector("#clear-log-button").disabled = false;
+    document.querySelector("#loading-text").style.display = "none";
 }
