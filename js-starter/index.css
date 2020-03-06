@@ -22,10 +22,11 @@
 #maincode-run-button,
 #debugcode-begin-button,
 #clear-log-button {
-  width: 110px;
   height: 50px;
   font-size: 18px;
   margin: 10px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 #debugger-run-pause-button,
@@ -103,6 +104,8 @@ td, th {
 
 td, th {
   padding: 2px;
+  max-width: 100px;
+  overflow-wrap: break-word;
 }
 
 #debugger-interval-select {
