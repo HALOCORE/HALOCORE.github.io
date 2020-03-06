@@ -9,11 +9,16 @@
   padding: 3px;
 }
 #maincode-input {
-  width: calc(100% - 25px);
-  margin-left: 10px;
+  width: calc(100% - 15px);
+  margin-left: 5px;
   background: whitesmoke;
-  height: 300px;
+  height: 400px;
 }
+
+.CodeMirror {
+  height: 400px;
+}
+
 #maincode-run-button,
 #debugcode-begin-button,
 #clear-log-button {
@@ -53,6 +58,7 @@
 #maincode-input-wrapper {
   font-size: 16px;
   margin: 10px;
+  height: 410px;
 }
 
 #control-pannel-wrapper {
@@ -66,4 +72,42 @@
 
 .debug-break-running-code {
   background-color: darkorange;
+}
+
+#debug-variable-display-wrapper {
+  display: none;
+}
+
+#debug-variable-display {
+  position: absolute;
+  width: 240px;
+  right: 50px;
+  opacity: 0.8;
+  top: 180px;
+  background: aliceblue;
+  border: 2px solid gray;
+  padding: 5px;
+  z-index: 999;
+}
+
+table {
+  width: 100%;
+  text-align: left;
+  border-spacing: 0px;
+}
+
+table,
+td, th {
+    border: 1px solid #333;
+}
+
+td, th {
+  padding: 2px;
+}
+
+#debugger-interval-select {
+  font-size: 16px;
+  margin: 10px;
+  margin-left: 0px;
+  height: 30px;
 }

@@ -1,4 +1,6 @@
 var _maincodeEditor;
+let _debugInterval = 100;
+
 window.onload = () => {
     _maincodeEditor = CodeMirror.fromTextArea(document.getElementById("maincode-input"), {
         lineNumbers: true,
@@ -10,6 +12,14 @@ window.onload = () => {
     document.querySelector("#debugcode-begin-button").disabled = false;
     document.querySelector("#clear-log-button").disabled = false;
     document.querySelector("#loading-text").style.display = "none";
+
+    let intervalSel = document.querySelector("#debugger-interval-select");
+    let intervalUpdater = () => {
+        _debugInterval = parseInt(intervalSel.value);
+        console.log("# update _debugInterval: ", _debugInterval);
+    };
+    intervalSel.addEventListener("change", intervalUpdater);
+    intervalUpdater();
 }
 
 function print() {
@@ -59,23 +69,36 @@ function codeCheck(codes) {
 }
 
 ///////////////////////////// DEBUG CORE BEGIN /////////////////////////////
+let _debug_break_variable_dict = null;
 function _debugCodeGen(codes) {
     function statementBreaksInjector({ types: t }) {
+        let breakCounter = 0;
+        _debug_break_variable_dict = {};
         return {
             visitor: {
                 ExpressionStatement(path) {
                     let exprType = path.node.expression.type;
                     let loc = path.node.expression.loc;
                     if (loc === undefined) return;
-                    if (exprType === 'AssignmentExpression' || exprType === 'CallExpression') {
+                    let refs = path.hub.file.scope.references;
+                    if (exprType === 'AssignmentExpression' || exprType === 'CallExpression' || exprType === 'UpdateExpression') {
                         console.log("Visit Expression Type: ", exprType, ", loc: ", loc);
+                        _debug_break_variable_dict[breakCounter] = [];
+                        for (let r in refs) {
+                            if (path.scope.hasBinding(r)) _debug_break_variable_dict[breakCounter].push(r);
+                        }
                         path.insertBefore(t.yieldExpression(
                             t.callExpression(t.identifier("_debug_break"),
-                                [t.numericLiteral(loc['start']['line']), t.numericLiteral(loc['start']['column']), 
-                                t.numericLiteral(loc['end']['line']), t.numericLiteral(loc['end']['column'])])
+                                [t.numericLiteral(breakCounter),
+                                t.numericLiteral(loc['start']['line']), t.numericLiteral(loc['start']['column']),
+                                t.numericLiteral(loc['end']['line']), t.numericLiteral(loc['end']['column']),
+                                t.arrowFunctionExpression([t.identifier("x")], t.callExpression(
+                                    t.identifier("eval"), [t.identifier("x")]
+                                ))])
                         ), false);
+                        breakCounter++;
                     } else {
-                        console.log("UNKNOWN Expression Type:", exprType, ", loc: ", loc);
+                        console.warn("UNKNOWN Expression Type:", exprType, ", loc: ", loc);
                     }
                 }
             }
@@ -91,13 +114,13 @@ function _debugCodeGen(codes) {
     return dgen;
 }
 
-let _debugInterval = 100;
 let _debugIterator = null;
 let _DEBUG_MODE_READY = "READY";
 let _DEBUG_MODE_RUN = "RUN";
 let _DEBUG_MODE_PAUSE = "PAUSE";
 let _DEBUG_MODE_PAUSED = "PAUSED";
 let _DEBUG_MODE_STEP = "STEP";
+let _DEBUG_MODE_ERROR = "ERROR";
 let _DEBUG_MODE_EXIT = "EXIT";
 let _DEBUG_MODE_EXITED = "EXITED";
 let _debugMode = _DEBUG_MODE_EXITED;
@@ -118,21 +141,57 @@ function _debug_enter() {
     document.querySelector("#debugger-run-pause-button").disabled = false;
     document.querySelector("#debugger-step-button").disabled = false;
     document.querySelector("#debugcode-exit-button").disabled = false;
+    document.querySelector("#debug-variable-display-wrapper").style.display = "block";
 }
 
 let _debug_lastMarker = null;
-function _debug_break(lineStart, colStart, lineEnd, colEnd) {
-    console.log("_debug_break AT:", lineStart, lineEnd);
-    if(_debug_lastMarker !== null) _debug_lastMarker.clear();
+let _debug_evaluator = null;
+
+function _debug_break_vars_display(varsvals) {
+    let tbody = document.querySelector("#debug-variable-table-body");
+    tbody.innerHTML = "";
+    for (let key in varsvals) {
+        let tr = document.createElement("tr");
+        let td1 = document.createElement("td");
+        let td2 = document.createElement("td");
+        td1.textContent = key;
+        td2.textContent = varsvals[key];
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tbody.appendChild(tr);
+    }
+}
+
+function _debug_break_vars_eval(vars) {
+    if (vars === undefined || vars === null) {
+        console.warn("_debug_break_vars_eval vars info not exist.");
+        return;
+    }
+    let varsvals = {};
+    for (let i = 0; i < vars.length; i++) {
+        let varName = vars[i];
+        try {
+            let varVal = _debug_evaluator(varName);
+            varsvals[varName] = varVal;
+        } catch (e) { }
+    }
+    console.log("_debug_break_vars_eval: ", varsvals);
+    _debug_break_vars_display(varsvals);
+}
+function _debug_break(breakId, lineStart, colStart, lineEnd, colEnd, evaluator) {
+    console.log("_debug_break[" + breakId + "]" + " AT:", lineStart, lineEnd);
+    if (_debug_lastMarker !== null) _debug_lastMarker.clear();
     _debug_lastMarker = _maincodeEditor.markText(
-        {line:lineStart - 1,ch:colStart},
-        {line:lineEnd - 1,ch:colEnd},
-        {className:"debug-break-running-code"});
-    //console.log(_debug_lastMarker);
+        { line: lineStart - 1, ch: colStart },
+        { line: lineEnd - 1, ch: colEnd },
+        { className: "debug-break-running-code" });
+    _debug_evaluator = evaluator;
+    let varNames = _debug_break_variable_dict[breakId];
+    _debug_break_vars_eval(varNames);
 }
 
 function _debug_leave() {
-    if(_debug_lastMarker !== null) _debug_lastMarker.clear();
+    if (_debug_lastMarker !== null) _debug_lastMarker.clear();
     debugMode = _DEBUG_MODE_EXITED;
     print("[INFO] 退出调试模式.");
     document.querySelector("#maincode-run-button").disabled = false;
@@ -141,42 +200,51 @@ function _debug_leave() {
     document.querySelector("#debugger-run-pause-button").innerText = "Run";
     document.querySelector("#debugger-step-button").disabled = true;
     document.querySelector("#debugcode-exit-button").disabled = true;
+    document.querySelector("#debug-variable-display-wrapper").style.display = "none";
+    document.querySelector("#debug-variable-table-body").innerHTML = "";
+}
+
+function _debug_error() {
+    debugMode = _DEBUG_MODE_ERROR;
+    document.querySelector("#debugger-run-pause-button").disabled = true;
+    document.querySelector("#debugger-step-button").disabled = true;
+    document.querySelector("#debugcode-exit-button").disabled = false;
 }
 
 function _debugIteratorHandler() {
-    if(_debugModeIs(_DEBUG_MODE_READY, _DEBUG_MODE_PAUSED, _DEBUG_MODE_EXITED)) {
+    if (_debugModeIs(_DEBUG_MODE_READY, _DEBUG_MODE_PAUSED, _DEBUG_MODE_EXITED)) {
         console.warn("# DEBUG STATE WARNING: should not iterate state. " + _debugMode);
         return;
     }
-    if(_debugModeIs(_DEBUG_MODE_PAUSE)) {
+    if (_debugModeIs(_DEBUG_MODE_PAUSE)) {
         _debugMode = _DEBUG_MODE_PAUSED;
         return;
     }
-    if(_debugModeIs(_DEBUG_MODE_EXIT)) {
+    if (_debugModeIs(_DEBUG_MODE_EXIT)) {
         _debug_leave();
         return;
     }
-    if(!_debugModeIs(_DEBUG_MODE_RUN, _DEBUG_MODE_STEP)) {
+    if (!_debugModeIs(_DEBUG_MODE_RUN, _DEBUG_MODE_STEP)) {
         print("[ERROR] unexpected debug state before step execution: " + _debugMode);
         _debug_leave();
         return;
     }
     //execute step
     let yieldVal = null;
-    try{
+    try {
         yieldVal = _debugIterator.next();
-    } catch(e) {
+    } catch (e) {
         print("[ERROR] " + e.message);
         console.error("debug execution error:", e);
-        _debug_leave();
+        _debug_error();
         return;
     }
     if (yieldVal !== null && yieldVal.done === false) {
-        if(_debugModeIs(_DEBUG_MODE_RUN)) {
+        if (_debugModeIs(_DEBUG_MODE_RUN)) {
             setTimeout(_debugIteratorHandler, _debugInterval);
             return;
         }
-        if(_debugModeIs(_DEBUG_MODE_STEP)) {
+        if (_debugModeIs(_DEBUG_MODE_STEP)) {
             _debugMode = _DEBUG_MODE_PAUSED;
             return;
         }
@@ -201,7 +269,7 @@ function debugmodeEnter() {
         print("[OK] 调试模式初始化成功.");
         _debugMode = _DEBUG_MODE_READY;
         _debug_enter();
-        
+
     } catch (e) {
         print("[ERROR] 调试模式初始化失败: " + e.message);
         console.log(e);

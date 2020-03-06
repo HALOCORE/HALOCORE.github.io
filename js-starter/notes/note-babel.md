@@ -41,6 +41,54 @@ const result = Babel.transform(inputCode, {
 print(result.code);
 ```
 
+```js
+let a = inputNumber("请输入a", 0);
+let sum = 0;
+let prod = 1;
+let i = 5;
+i++;
+print(_debug_evaluator("[i,sum,prod]"));
+_debug_evaluator("i")
+for(let i = 1; i <= a; i++) {
+  sum = sum + i;
+  prod = prod * i;
+  print(_debug_evaluator("[i,sum,prod]"));
+  if (Math.floor(sum / 2) === sum / 2) {
+    print("偶数sum", sum);
+  } else {
+    print("奇数sum", sum);
+  }
+  print("乘积", prod);
+}
+print(_debug_evaluator("[i,sum,prod]"));
+print("最终和为", sum);
+print("最终积为", prod);
+
+```
+
+```js
+let a = inputNumber("请输入a", 0);
+let sum = 0;
+let prod = 1;
+sum = 4;
+let i = 4;
+
+for(let i = 1; i <= a; i++) {
+  sum = sum + i;
+  prod = prod * i;
+  if (Math.floor(sum / 2) === sum / 2) {
+    let cc = 4;
+    print("偶数sum", sum, cc);
+  } else {
+    print("奇数sum", sum);
+  }
+  print("乘积", prod);
+}
+
+print("i=", i);
+print("最终和为", sum);
+print("最终积为", prod);
+```
 
 ```json
   {

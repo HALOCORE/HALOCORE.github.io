@@ -18,6 +18,13 @@
     <div id="debugger-control-zone">
       <button id="debugcode-begin-button" onclick="debugmodeEnter()" disabled>开始调试</button>
       <button id="debugger-run-pause-button" onclick="debuggerRunPause()" disabled>Run</button>
+      <select id="debugger-interval-select">
+        <option value="20">20ms</option>
+        <option value="50">50ms</option>
+        <option value="100" selected>100ms</option>
+        <option value="200">200ms</option>
+        <option value="500">500ms</option>
+      </select>
       <button id="debugger-step-button" onclick="debuggerStep()" disabled>Step</button>
       <button id="debugcode-exit-button" onclick="debuggerExit()" disabled>Exit</button>
     </div>
@@ -42,6 +49,23 @@ for(let i = 1; i <= a; i++) {
 print("最终和为", sum);
 print("最终积为", prod);
 </textarea>
+    <div id="debug-variable-display-wrapper">
+      <div id="debug-variable-display">
+        <table id="debug-variable-table">
+          <thead>
+            <tr>
+              <th colspan="2">当前变量取值</th>
+            </tr>
+            <tr>
+              <th>变量名</th>
+              <th>值</th>
+            </tr>
+          </thead>
+          <tbody id="debug-variable-table-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
   <div id="msg-board"></div>
   <div id="more-info-board">
