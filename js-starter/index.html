@@ -2,20 +2,28 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>javascript starter</title>
-    <link rel="stylesheet" href="lib/codemirror.css">
-    <link rel="stylesheet" href="index.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>javascript starter</title>
+  <link rel="stylesheet" href="lib/codemirror.css">
+  <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
-    <button id="maincode-run-button" onclick="maincodeRun()" disabled>运行</button>
-    <button id="debugcode-run-button" onclick="debugcodeRun()" disabled>调试运行</button>
-    <button id="clear-log-button" onclick="logClearRun()" disabled>清除输出</button>
+  <div id="control-pannel-wrapper">
     <span id="loading-text">Loading...</span>
-    <div id="maincode-input-wrapper">
-        <textarea id="maincode-input" name="maincode-input">
+    <button id="maincode-run-button" onclick="maincodeRun()" disabled>运行</button>
+    <button id="clear-log-button" onclick="logClearRun()" disabled>清除输出</button>
+
+    <div id="debugger-control-zone">
+      <button id="debugcode-begin-button" onclick="debugmodeEnter()" disabled>开始调试</button>
+      <button id="debugger-run-pause-button" onclick="debuggerRunPause()" disabled>Run</button>
+      <button id="debugger-step-button" onclick="debuggerStep()" disabled>Step</button>
+      <button id="debugcode-exit-button" onclick="debuggerExit()" disabled>Exit</button>
+    </div>
+  </div>
+  <div id="maincode-input-wrapper">
+    <textarea id="maincode-input" name="maincode-input">
 let a = inputNumber("请输入a", 0);
 let sum = 0;
 let prod = 1;
@@ -32,18 +40,18 @@ for(let i = 1; i <= a; i++) {
 }
 
 print("最终和为", sum);
-print("最终积为", sum);
+print("最终积为", prod);
 </textarea>
-    </div>
-    <div id="msg-board"></div>
-    <div id="more-info-board">
-        <h4>最后一次执行的代码:</h4>
-        <div id="last-code-board">(未执行过)</div>
-    </div>
-    <script src="lib/codemirror.js"></script>
-    <script src="lib/codemirror-javascript.js"></script>
-    <script src="lib/babel.min.js"></script>
-    <script src="index.js"></script>
+  </div>
+  <div id="msg-board"></div>
+  <div id="more-info-board">
+    <h4>最后一次执行的代码:</h4>
+    <div id="last-code-board">(未执行过)</div>
+  </div>
+  <script src="lib/codemirror.js"></script>
+  <script src="lib/codemirror-javascript.js"></script>
+  <script src="lib/babel.min.js"></script>
+  <script src="index.js"></script>
 </body>
 
 </html>
