@@ -1,6 +1,9 @@
-var _maincodeEditor;
+"use strict";
+let _maincodeEditor;
 let _debugInterval = 100;
 
+let _breakpoint_default_opacity = 1.0;
+let _breakpoint_invalid_opacity = 0.3;
 window.onload = () => {
     _maincodeEditor = CodeMirror.fromTextArea(document.getElementById("maincode-input"), {
         lineNumbers: true,
@@ -12,15 +15,16 @@ window.onload = () => {
     function makeBreakpointMarker() {
         var marker = document.createElement("div");
         marker.style.color = "#822";
+        marker.style.opacity = _breakpoint_default_opacity;
         marker.style.position = "relative";
         marker.style.left = "-30px";
         marker.innerHTML = "●";
         return marker;
-      }
+    }
     _maincodeEditor.on("gutterClick", function (cm, n) {
         var info = cm.lineInfo(n);
         cm.setGutterMarker(n, "breakpoints", info.gutterMarkers ? null : makeBreakpointMarker());
-        _breakpointsUpdate();
+        _updateBreakpoints();
     });
     document.querySelector("#maincode-run-button").disabled = false;
     document.querySelector("#debugcode-begin-button").disabled = false;
@@ -51,7 +55,7 @@ function print() {
     msgbd.scrollTop = msgbd.scrollHeight;
 }
 
-function inputNumber(msg, defaultValue) {
+function inputNumber(msg, defaultValue = 0) {
     let a = prompt(msg, defaultValue.toString());
     try {
         a = parseFloat(a);
@@ -62,7 +66,7 @@ function inputNumber(msg, defaultValue) {
     return a;
 }
 
-function inputString(msg, defaultValue) {
+function inputString(msg, defaultValue = "") {
     let a = prompt(msg, defaultValue.toString());
     return a;
 }
@@ -86,14 +90,39 @@ function codeCheck(codes) {
 function _lineno_babel2cm(lineno) { return lineno - 2; }
 function _lineno_cm2babel(lineno) { return lineno + 2; }
 
-let _breakpoint_lineno_dict = {};
-function _breakpointsUpdate() {
-    _breakpoint_lineno_dict = {};
+let _breakpoint_debug_lineno_dict = null;
+let _debug_break_lineno_dict = null;
+function _updateBreakpoints() {
     let lineCount = _maincodeEditor.doc.size;
-    for(let i=0; i<lineCount; i++) {
-        let info = _maincodeEditor.lineInfo(i);
-        if (info.gutterMarkers) {
-            _breakpoint_lineno_dict[_lineno_cm2babel(i)] = true;
+    if(!_isInDebugMode()) {
+        if(_breakpoint_debug_lineno_dict === null) {
+            console.log("_updateBreakpoints EDIT MODE ignored.");
+        } else {
+            console.log("_updateBreakpoints EDIT MODE.");
+            for (let i = 0; i < lineCount; i++) {
+                let info = _maincodeEditor.lineInfo(i);
+                if (info.gutterMarkers) {
+                    if (info.gutterMarkers.breakpoints) {
+                        info.gutterMarkers.breakpoints.style.opacity = _breakpoint_default_opacity;
+                    }
+                }
+            }
+        }
+    } else {
+        console.log("_updateBreakpoints DEBUG MODE.");
+        _breakpoint_debug_lineno_dict = {};
+        for (let i = 0; i < lineCount; i++) {
+            let info = _maincodeEditor.lineInfo(i);
+            if (info.gutterMarkers) {
+                if (info.gutterMarkers.breakpoints) {
+                    _breakpoint_debug_lineno_dict[_lineno_cm2babel(i)] = true;
+                    if(_debug_break_lineno_dict[_lineno_cm2babel(i)] === true) {
+                        info.gutterMarkers.breakpoints.style.opacity = _breakpoint_default_opacity;
+                    } else {
+                        info.gutterMarkers.breakpoints.style.opacity = _breakpoint_invalid_opacity;
+                    }
+                }
+            }
         }
     }
 }
@@ -104,6 +133,7 @@ function _debugCodeGen(codes) {
     let breakCounter = 0;
     _debug_break_variable_dict = {};
     _debug_break_dedup_dict = {};
+    _debug_break_lineno_dict = {};
     function statementBreaksInjector({ types: t }) {
         return {
             visitor: {
@@ -115,6 +145,7 @@ function _debugCodeGen(codes) {
                         "-" + loc['end']['line'] + "-" + loc['end']['column'];
                     if (breakPointSig in _debug_break_dedup_dict) return;
                     _debug_break_dedup_dict[breakPointSig] = true;
+                    _debug_break_lineno_dict[loc['start']['line']] = true;
                     let refs = path.hub.file.scope.references;
                     if (exprType === 'AssignmentExpression' || exprType === 'CallExpression' || exprType === 'UpdateExpression') {
                         console.log("Visit Expression Type: ", exprType, ", loc: ", loc);
@@ -160,6 +191,7 @@ let _DEBUG_MODE_EXIT = "EXIT";
 let _DEBUG_MODE_EXITED = "EXITED";
 let _debugMode = _DEBUG_MODE_EXITED;
 
+function _isInDebugMode() { return _debugMode !== _DEBUG_MODE_EXITED; }
 function _debugModeIs() {
     let numargs = arguments.length;
     for (let i = 0; i < numargs; i++) {
@@ -177,6 +209,8 @@ function _debug_enter() {
     document.querySelector("#debugger-step-button").disabled = false;
     document.querySelector("#debugcode-exit-button").disabled = false;
     document.querySelector("#debug-variable-display-wrapper").style.display = "block";
+    _maincodeEditor.options.readOnly = true;
+    _updateBreakpoints();
 }
 
 let _debug_lastMarker = null;
@@ -226,7 +260,7 @@ function _debug_break(breakId, lineStart, colStart, lineEnd, colEnd, evaluator) 
 }
 
 function _debug_pause() {
-    if(!_debugModeIs(_DEBUG_MODE_RUN)) {
+    if (!_debugModeIs(_DEBUG_MODE_RUN)) {
         console.error("call _debug_pause while not _DEBUG_MODE_RUN: " + _debugMode);
         return;
     }
@@ -237,7 +271,7 @@ function _debug_pause() {
 
 function _debug_leave() {
     if (_debug_lastMarker !== null) _debug_lastMarker.clear();
-    debugMode = _DEBUG_MODE_EXITED;
+    _debugMode = _DEBUG_MODE_EXITED;
     print("[INFO] 退出调试模式.");
     document.querySelector("#maincode-run-button").disabled = false;
     document.querySelector("#debugcode-begin-button").disabled = false;
@@ -247,10 +281,12 @@ function _debug_leave() {
     document.querySelector("#debugcode-exit-button").disabled = true;
     document.querySelector("#debug-variable-display-wrapper").style.display = "none";
     document.querySelector("#debug-variable-table-body").innerHTML = "";
+    _maincodeEditor.options.readOnly = false;
+    _updateBreakpoints();
 }
 
 function _debug_error() {
-    debugMode = _DEBUG_MODE_ERROR;
+    _debugMode = _DEBUG_MODE_ERROR;
     document.querySelector("#debugger-run-pause-button").disabled = true;
     document.querySelector("#debugger-step-button").disabled = true;
     document.querySelector("#debugcode-exit-button").disabled = false;
@@ -287,7 +323,7 @@ function _debugIteratorHandler() {
     if (yieldVal !== null && yieldVal.done === false) {
         if (_debugModeIs(_DEBUG_MODE_RUN)) {
             let val = yieldVal.value;
-            if(_breakpoint_lineno_dict[val] === true) {
+            if (_breakpoint_debug_lineno_dict[val] === true) {
                 _debug_pause();
             }
             setTimeout(_debugIteratorHandler, _debugInterval);
@@ -301,6 +337,7 @@ function _debugIteratorHandler() {
         _debug_leave();
         return;
     } else {
+        console.log("debug execution finish.");
         _debug_leave();
     }
 }
