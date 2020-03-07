@@ -6,12 +6,26 @@ window.onload = () => {
         lineNumbers: true,
         readOnly: false,
         styleActiveLine: true,
-        matchBrackets: true
+        matchBrackets: true,
+        gutters: ["CodeMirror-linenumbers", "breakpoints"]
+    });
+    function makeBreakpointMarker() {
+        var marker = document.createElement("div");
+        marker.style.color = "#822";
+        marker.style.position = "relative";
+        marker.style.left = "-30px";
+        marker.innerHTML = "●";
+        return marker;
+      }
+    _maincodeEditor.on("gutterClick", function (cm, n) {
+        var info = cm.lineInfo(n);
+        cm.setGutterMarker(n, "breakpoints", info.gutterMarkers ? null : makeBreakpointMarker());
+        _breakpointsUpdate();
     });
     document.querySelector("#maincode-run-button").disabled = false;
     document.querySelector("#debugcode-begin-button").disabled = false;
     document.querySelector("#clear-log-button").disabled = false;
-    document.querySelector("#loading-text").style.display = "none";
+    document.querySelector("#loading-text").innerText = "v0.6";
 
     let intervalSel = document.querySelector("#debugger-interval-select");
     let intervalUpdater = () => {
@@ -69,17 +83,38 @@ function codeCheck(codes) {
 }
 
 ///////////////////////////// DEBUG CORE BEGIN /////////////////////////////
+function _lineno_babel2cm(lineno) { return lineno - 2; }
+function _lineno_cm2babel(lineno) { return lineno + 2; }
+
+let _breakpoint_lineno_dict = {};
+function _breakpointsUpdate() {
+    _breakpoint_lineno_dict = {};
+    let lineCount = _maincodeEditor.doc.size;
+    for(let i=0; i<lineCount; i++) {
+        let info = _maincodeEditor.lineInfo(i);
+        if (info.gutterMarkers) {
+            _breakpoint_lineno_dict[_lineno_cm2babel(i)] = true;
+        }
+    }
+}
+
 let _debug_break_variable_dict = null;
+let _debug_break_dedup_dict = null;
 function _debugCodeGen(codes) {
+    let breakCounter = 0;
+    _debug_break_variable_dict = {};
+    _debug_break_dedup_dict = {};
     function statementBreaksInjector({ types: t }) {
-        let breakCounter = 0;
-        _debug_break_variable_dict = {};
         return {
             visitor: {
                 ExpressionStatement(path) {
                     let exprType = path.node.expression.type;
                     let loc = path.node.expression.loc;
                     if (loc === undefined) return;
+                    let breakPointSig = loc['start']['line'] + "-" + loc['start']['column'] +
+                        "-" + loc['end']['line'] + "-" + loc['end']['column'];
+                    if (breakPointSig in _debug_break_dedup_dict) return;
+                    _debug_break_dedup_dict[breakPointSig] = true;
                     let refs = path.hub.file.scope.references;
                     if (exprType === 'AssignmentExpression' || exprType === 'CallExpression' || exprType === 'UpdateExpression') {
                         console.log("Visit Expression Type: ", exprType, ", loc: ", loc);
@@ -175,19 +210,29 @@ function _debug_break_vars_eval(vars) {
             varsvals[varName] = varVal;
         } catch (e) { }
     }
-    console.log("_debug_break_vars_eval: ", varsvals);
     _debug_break_vars_display(varsvals);
 }
 function _debug_break(breakId, lineStart, colStart, lineEnd, colEnd, evaluator) {
     console.log("_debug_break[" + breakId + "]" + " AT:", lineStart, lineEnd);
     if (_debug_lastMarker !== null) _debug_lastMarker.clear();
     _debug_lastMarker = _maincodeEditor.markText(
-        { line: lineStart - 1, ch: colStart },
-        { line: lineEnd - 1, ch: colEnd },
+        { line: _lineno_babel2cm(lineStart), ch: colStart },
+        { line: _lineno_babel2cm(lineEnd), ch: colEnd },
         { className: "debug-break-running-code" });
     _debug_evaluator = evaluator;
     let varNames = _debug_break_variable_dict[breakId];
     _debug_break_vars_eval(varNames);
+    return lineStart;
+}
+
+function _debug_pause() {
+    if(!_debugModeIs(_DEBUG_MODE_RUN)) {
+        console.error("call _debug_pause while not _DEBUG_MODE_RUN: " + _debugMode);
+        return;
+    }
+    _debugMode = _DEBUG_MODE_PAUSE;
+    document.querySelector("#debugger-run-pause-button").innerText = "Run";
+    document.querySelector("#debugger-step-button").disabled = false;
 }
 
 function _debug_leave() {
@@ -241,6 +286,10 @@ function _debugIteratorHandler() {
     }
     if (yieldVal !== null && yieldVal.done === false) {
         if (_debugModeIs(_DEBUG_MODE_RUN)) {
+            let val = yieldVal.value;
+            if(_breakpoint_lineno_dict[val] === true) {
+                _debug_pause();
+            }
             setTimeout(_debugIteratorHandler, _debugInterval);
             return;
         }
@@ -259,7 +308,7 @@ function _debugIteratorHandler() {
 function debugmodeEnter() {
     let tarea = document.getElementById("maincode-input");
     tarea.value = _maincodeEditor.getValue();
-    let codes = tarea.value;
+    let codes = "\"use strict\";\n" + tarea.value;
     codeCheck(codes);
     document.querySelector("#last-code-board").innerText = codes;
     console.log(codes);
@@ -278,16 +327,14 @@ function debugmodeEnter() {
 
 function debuggerRunPause() {
     if (_debugModeIs(_DEBUG_MODE_RUN)) {
-        _debugMode = _DEBUG_MODE_PAUSE;
-        document.querySelector("#debugger-run-pause-button").innerText = "Run";
-        document.querySelector("#debugger-step-button").disabled = false;
+        _debug_pause();
         return;
     }
     if (_debugModeIs(_DEBUG_MODE_READY, _DEBUG_MODE_PAUSED)) {
         _debugMode = _DEBUG_MODE_RUN;
-        _debugIteratorHandler();
         document.querySelector("#debugger-run-pause-button").innerText = "Pause";
         document.querySelector("#debugger-step-button").disabled = true;
+        _debugIteratorHandler();
         return;
     }
     console.warn("debuggerRunPause: not appropriate to execute: " + _debugMode);
@@ -318,7 +365,7 @@ function debuggerExit() {
 function maincodeRun() {
     let tarea = document.getElementById("maincode-input");
     tarea.value = _maincodeEditor.getValue();
-    let codes = tarea.value;
+    let codes = "\"use strict\";\n" + tarea.value;
     codeCheck(codes);
     document.querySelector("#last-code-board").innerText = codes;
     console.log(codes);
