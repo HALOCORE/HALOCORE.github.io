@@ -10,7 +10,8 @@ window.onload = () => {
         readOnly: false,
         styleActiveLine: true,
         matchBrackets: true,
-        gutters: ["CodeMirror-linenumbers", "breakpoints"]
+        gutters: ["CodeMirror-linenumbers", "breakpoints"],
+        hintOptions: {"completeSingle": false}
     });
     function makeBreakpointMarker() {
         var marker = document.createElement("div");
@@ -26,10 +27,32 @@ window.onload = () => {
         cm.setGutterMarker(n, "breakpoints", info.gutterMarkers ? null : makeBreakpointMarker());
         _updateBreakpoints();
     });
+    function ignoreToken(token) {
+        let charCode = token[0].charCodeAt();
+        if(charCode >= "a".charCodeAt() && charCode <= "z".charCodeAt()) return false;
+        if(charCode >= "A".charCodeAt() && charCode <= "Z".charCodeAt()) return false;
+        if(charCode === "_".charCodeAt() || charCode === ".".charCodeAt()) return false;
+        return true;
+    }
+    let autocompleteCounter = 0;
+    _maincodeEditor.on("change", function (editor, change) {
+        if (change.origin == "+input") {
+            if(!ignoreToken(change.text)) {
+                console.log(change.text);
+                autocompleteCounter++;
+                setTimeout(function () { 
+                    autocompleteCounter--;
+                    if (autocompleteCounter > 0) return;
+                    editor.execCommand("autocomplete"); 
+                }, 200);
+            }
+        };
+    });
+
     document.querySelector("#maincode-run-button").disabled = false;
     document.querySelector("#debugcode-begin-button").disabled = false;
     document.querySelector("#clear-log-button").disabled = false;
-    document.querySelector("#loading-text").innerText = "v0.6";
+    document.querySelector("#loading-text").innerText = "v0.7";
 
     let intervalSel = document.querySelector("#debugger-interval-select");
     let intervalUpdater = () => {
@@ -40,19 +63,25 @@ window.onload = () => {
     intervalUpdater();
 }
 
+let _print_msgbd = document.querySelector("#msg-board");
+let _print_scroll_counter = 0;
 function print() {
-    let msgbd = document.querySelector("#msg-board");
     let elem = document.createElement("div");
     let numargs = arguments.length;
     let msgstr = "";
     for (let i = 0; i < numargs; i++) msgstr += arguments[i].toString() + " ";
     elem.innerText = msgstr;
+    console.log("**print** " + msgstr);
     if (msgstr.indexOf("[INFO]") >= 0) elem.style.color = "blue";
     if (msgstr.indexOf("[OK]") >= 0) elem.style.color = "green";
     if (msgstr.indexOf("[WARN]") >= 0) elem.style.color = "orange";
     if (msgstr.indexOf("[ERROR]") >= 0) elem.style.color = "red";
-    msgbd.appendChild(elem);
-    msgbd.scrollTop = msgbd.scrollHeight;
+    _print_msgbd.appendChild(elem);
+    _print_scroll_counter++;
+    setTimeout(() => {
+        _print_scroll_counter--;
+        if(_print_scroll_counter === 0) _print_msgbd.scrollTop = _print_msgbd.scrollHeight;
+    }, 0);
 }
 
 function inputNumber(msg, defaultValue = 0) {
@@ -94,8 +123,8 @@ let _breakpoint_debug_lineno_dict = null;
 let _debug_break_lineno_dict = null;
 function _updateBreakpoints() {
     let lineCount = _maincodeEditor.doc.size;
-    if(!_isInDebugMode()) {
-        if(_breakpoint_debug_lineno_dict === null) {
+    if (!_isInDebugMode()) {
+        if (_breakpoint_debug_lineno_dict === null) {
             console.log("_updateBreakpoints EDIT MODE ignored.");
         } else {
             console.log("_updateBreakpoints EDIT MODE.");
@@ -116,7 +145,7 @@ function _updateBreakpoints() {
             if (info.gutterMarkers) {
                 if (info.gutterMarkers.breakpoints) {
                     _breakpoint_debug_lineno_dict[_lineno_cm2babel(i)] = true;
-                    if(_debug_break_lineno_dict[_lineno_cm2babel(i)] === true) {
+                    if (_debug_break_lineno_dict[_lineno_cm2babel(i)] === true) {
                         info.gutterMarkers.breakpoints.style.opacity = _breakpoint_default_opacity;
                     } else {
                         info.gutterMarkers.breakpoints.style.opacity = _breakpoint_invalid_opacity;
