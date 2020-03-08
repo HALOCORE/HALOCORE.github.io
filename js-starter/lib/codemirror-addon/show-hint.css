@@ -13,8 +13,8 @@
   border-radius: 3px;
   border: 1px solid silver;
 
-  background: white;
-  font-size: 90%;
+  background: rgb(232, 249, 255);
+  font-size: 120%;
   font-family: monospace;
 
   max-height: 20em;
@@ -24,6 +24,7 @@
 .CodeMirror-hint {
   margin: 0;
   padding: 0 4px;
+  padding-right: 10px;
   border-radius: 2px;
   white-space: pre;
   color: black;

@@ -44,7 +44,7 @@ window.onload = () => {
                     autocompleteCounter--;
                     if (autocompleteCounter > 0) return;
                     editor.execCommand("autocomplete"); 
-                }, 200);
+                }, 50);
             }
         };
     });
@@ -72,10 +72,10 @@ function print() {
     for (let i = 0; i < numargs; i++) msgstr += arguments[i].toString() + " ";
     elem.innerText = msgstr;
     console.log("**print** " + msgstr);
-    if (msgstr.indexOf("[INFO]") >= 0) elem.style.color = "blue";
-    if (msgstr.indexOf("[OK]") >= 0) elem.style.color = "green";
-    if (msgstr.indexOf("[WARN]") >= 0) elem.style.color = "orange";
-    if (msgstr.indexOf("[ERROR]") >= 0) elem.style.color = "red";
+    if (msgstr.startsWith("[INFO]")) elem.style.color = "blue";
+    if (msgstr.startsWith("[OK]")) elem.style.color = "green";
+    if (msgstr.startsWith("[WARN]")) elem.style.color = "orange";
+    if (msgstr.startsWith("[ERROR]")) elem.style.color = "red";
     _print_msgbd.appendChild(elem);
     _print_scroll_counter++;
     setTimeout(() => {
