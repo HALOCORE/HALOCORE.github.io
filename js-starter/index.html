@@ -13,12 +13,12 @@
 <body>
   <div id="control-pannel-wrapper">
     <span id="loading-text">Loading...</span>
-    <button id="maincode-run-button" onclick="maincodeRun()" disabled>运行</button>
-    <button id="clear-log-button" onclick="logClearRun()" disabled>清除输出</button>
+    <button id="maincode-run-button" onclick="__maincodeRun()" disabled>运行</button>
+    <button id="clear-log-button" onclick="__logClearRun()" disabled>清除输出</button>
 
     <div id="debugger-control-zone">
-      <button id="debugcode-begin-button" onclick="debugmodeEnter()" disabled>进入调试模式</button>
-      <button id="debugger-run-pause-button" onclick="debuggerRunPause()" disabled>Run</button>
+      <button id="debugcode-begin-button" onclick="__debugmodeEnter()" disabled>进入调试模式</button>
+      <button id="debugger-run-pause-button" onclick="__debuggerRunPause()" disabled>Run</button>
       <select id="debugger-interval-select">
         <option value="20">20ms</option>
         <option value="50">50ms</option>
@@ -26,8 +26,8 @@
         <option value="200">200ms</option>
         <option value="500">500ms</option>
       </select>
-      <button id="debugger-step-button" onclick="debuggerStep()" disabled>Step</button>
-      <button id="debugcode-exit-button" onclick="debuggerExit()" disabled>Exit</button>
+      <button id="debugger-step-button" onclick="__debuggerStep()" disabled>Step</button>
+      <button id="debugcode-exit-button" onclick="__debuggerExit()" disabled>Exit</button>
     </div>
   </div>
   <div id="maincode-input-wrapper">

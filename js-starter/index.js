@@ -1,4 +1,44 @@
 "use strict";
+
+///////////////////////////// USER BEGIN /////////////////////////////
+let _print_msgbd = document.querySelector("#msg-board");
+let _print_scroll_counter = 0;
+function print() {
+    let elem = document.createElement("div");
+    let numargs = arguments.length;
+    let msgstr = "";
+    for (let i = 0; i < numargs; i++) msgstr += arguments[i].toString() + " ";
+    elem.innerText = msgstr;
+    console.log("**print** " + msgstr);
+    if (msgstr.startsWith("[INFO]")) elem.style.color = "blue";
+    if (msgstr.startsWith("[OK]")) elem.style.color = "green";
+    if (msgstr.startsWith("[WARN]")) elem.style.color = "orange";
+    if (msgstr.startsWith("[ERROR]")) elem.style.color = "red";
+    _print_msgbd.appendChild(elem);
+    _print_scroll_counter++;
+    setTimeout(() => {
+        _print_scroll_counter--;
+        if(_print_scroll_counter === 0) _print_msgbd.scrollTop = _print_msgbd.scrollHeight;
+    }, 0);
+}
+
+function inputNumber(msg, defaultValue = 0) {
+    let a = prompt(msg, defaultValue.toString());
+    try {
+        a = parseFloat(a);
+    } catch (e) {
+        alert("输入的不是数值，程序结束");
+        throw e;
+    }
+    return a;
+}
+
+function inputString(msg, defaultValue = "") {
+    let a = prompt(msg, defaultValue.toString());
+    return a;
+}
+///////////////////////////// USER END /////////////////////////////
+
 let _maincodeEditor;
 let _debugInterval = 100;
 
@@ -63,44 +103,7 @@ window.onload = () => {
     intervalUpdater();
 }
 
-let _print_msgbd = document.querySelector("#msg-board");
-let _print_scroll_counter = 0;
-function print() {
-    let elem = document.createElement("div");
-    let numargs = arguments.length;
-    let msgstr = "";
-    for (let i = 0; i < numargs; i++) msgstr += arguments[i].toString() + " ";
-    elem.innerText = msgstr;
-    console.log("**print** " + msgstr);
-    if (msgstr.startsWith("[INFO]")) elem.style.color = "blue";
-    if (msgstr.startsWith("[OK]")) elem.style.color = "green";
-    if (msgstr.startsWith("[WARN]")) elem.style.color = "orange";
-    if (msgstr.startsWith("[ERROR]")) elem.style.color = "red";
-    _print_msgbd.appendChild(elem);
-    _print_scroll_counter++;
-    setTimeout(() => {
-        _print_scroll_counter--;
-        if(_print_scroll_counter === 0) _print_msgbd.scrollTop = _print_msgbd.scrollHeight;
-    }, 0);
-}
-
-function inputNumber(msg, defaultValue = 0) {
-    let a = prompt(msg, defaultValue.toString());
-    try {
-        a = parseFloat(a);
-    } catch (e) {
-        alert("输入的不是数值，程序结束");
-        throw e;
-    }
-    return a;
-}
-
-function inputString(msg, defaultValue = "") {
-    let a = prompt(msg, defaultValue.toString());
-    return a;
-}
-
-function codeCheck(codes) {
+function __codeCheck(codes) {
     if (codes.indexOf("，") >= 0) {
         print("[WARN] 发现中文逗号\"，\". 如果中文符号在注释里可忽略.");
     }
@@ -176,7 +179,9 @@ function _debugCodeGen(codes) {
                     _debug_break_dedup_dict[breakPointSig] = true;
                     _debug_break_lineno_dict[loc['start']['line']] = true;
                     let refs = path.hub.file.scope.references;
-                    if (exprType === 'AssignmentExpression' || exprType === 'CallExpression' || exprType === 'UpdateExpression') {
+                    if (exprType === 'StringLiteral' || exprType === 'NumericLiteral') {
+                        console.log("Ignored Expression Type:", exprType, ", loc: ", loc);
+                    } else {
                         console.log("Visit Expression Type: ", exprType, ", loc: ", loc);
                         _debug_break_variable_dict[breakCounter] = [];
                         for (let r in refs) {
@@ -192,8 +197,6 @@ function _debugCodeGen(codes) {
                                 ))])
                         ), false);
                         breakCounter++;
-                    } else {
-                        console.warn("UNKNOWN Expression Type:", exprType, ", loc: ", loc);
                     }
                 }
             }
@@ -238,6 +241,7 @@ function _debug_enter() {
     document.querySelector("#debugger-step-button").disabled = false;
     document.querySelector("#debugcode-exit-button").disabled = false;
     document.querySelector("#debug-variable-display-wrapper").style.display = "block";
+    document.querySelector("#debugger-control-zone").classList.add("debugger-normal");
     _maincodeEditor.options.readOnly = true;
     _updateBreakpoints();
 }
@@ -310,6 +314,7 @@ function _debug_leave() {
     document.querySelector("#debugcode-exit-button").disabled = true;
     document.querySelector("#debug-variable-display-wrapper").style.display = "none";
     document.querySelector("#debug-variable-table-body").innerHTML = "";
+    document.querySelector("#debugger-control-zone").classList.remove("debugger-normal", "debugger-error");
     _maincodeEditor.options.readOnly = false;
     _updateBreakpoints();
 }
@@ -319,6 +324,7 @@ function _debug_error() {
     document.querySelector("#debugger-run-pause-button").disabled = true;
     document.querySelector("#debugger-step-button").disabled = true;
     document.querySelector("#debugcode-exit-button").disabled = false;
+    document.querySelector("#debugger-control-zone").classList.add("debugger-error");
 }
 
 function _debugIteratorHandler() {
@@ -352,7 +358,7 @@ function _debugIteratorHandler() {
     if (yieldVal !== null && yieldVal.done === false) {
         if (_debugModeIs(_DEBUG_MODE_RUN)) {
             let val = yieldVal.value;
-            if (_breakpoint_debug_lineno_dict[val] === true) {
+            if (_breakpoint_debug_lineno_dict && _breakpoint_debug_lineno_dict[val] === true) {
                 _debug_pause();
             }
             setTimeout(_debugIteratorHandler, _debugInterval);
@@ -371,11 +377,11 @@ function _debugIteratorHandler() {
     }
 }
 
-function debugmodeEnter() {
+function __debugmodeEnter() {
     let tarea = document.getElementById("maincode-input");
     tarea.value = _maincodeEditor.getValue();
     let codes = "\"use strict\";\n" + tarea.value;
-    codeCheck(codes);
+    __codeCheck(codes);
     document.querySelector("#last-code-board").innerText = codes;
     console.log(codes);
     try {
@@ -391,7 +397,7 @@ function debugmodeEnter() {
     }
 }
 
-function debuggerRunPause() {
+function __debuggerRunPause() {
     if (_debugModeIs(_DEBUG_MODE_RUN)) {
         _debug_pause();
         return;
@@ -403,21 +409,21 @@ function debuggerRunPause() {
         _debugIteratorHandler();
         return;
     }
-    console.warn("debuggerRunPause: not appropriate to execute: " + _debugMode);
+    console.warn("__debuggerRunPause: not appropriate to execute: " + _debugMode);
 }
 
-function debuggerStep() {
+function __debuggerStep() {
     if (!_debugModeIs(_DEBUG_MODE_READY, _DEBUG_MODE_PAUSED)) {
-        console.warn("debuggerStep: not appropriate to execute: " + _debugMode);
+        console.warn("__debuggerStep: not appropriate to execute: " + _debugMode);
         return;
     }
     _debugMode = _DEBUG_MODE_STEP;
     _debugIteratorHandler();
 }
 
-function debuggerExit() {
+function __debuggerExit() {
     if (_debugModeIs(_DEBUG_MODE_EXITED)) {
-        console.warn("debuggerExit: debugger already exited: " + _debugMode);
+        console.warn("__debuggerExit: debugger already exited: " + _debugMode);
         return;
     }
     _debugMode = _DEBUG_MODE_EXIT;
@@ -425,14 +431,13 @@ function debuggerExit() {
         _debugIteratorHandler();
     }
 }
-
 ///////////////////////////// DEBUG CORE END /////////////////////////////
 
-function maincodeRun() {
+function __maincodeRun() {
     let tarea = document.getElementById("maincode-input");
     tarea.value = _maincodeEditor.getValue();
     let codes = "\"use strict\";\n" + tarea.value;
-    codeCheck(codes);
+    __codeCheck(codes);
     document.querySelector("#last-code-board").innerText = codes;
     console.log(codes);
     try {
@@ -446,7 +451,7 @@ function maincodeRun() {
     }
 }
 
-function logClearRun() {
+function __logClearRun() {
     let msgbd = document.querySelector("#msg-board");
     msgbd.innerHTML = "";
     msgbd.scrollTop = msgbd.scrollHeight;
