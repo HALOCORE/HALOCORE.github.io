@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JavaScript Starter v0.7</title>
+  <title>JavaScript Starter v0.8</title>
   <link rel="stylesheet" href="lib/codemirror.css">
   <link rel="stylesheet" href="lib/codemirror-addon/show-hint.css">
   <link rel="stylesheet" href="index.css">
@@ -36,10 +36,17 @@ let a = inputNumber("请输入a", 0);
 let sum = 0;
 let prod = 1;
 
+function isEven(x) {
+  let h = x / 2;
+  let ih = Math.floor(h);
+  if (h === ih){ return true; }
+  return false;
+}
+
 for(let i = 1; i <= a; i++) {
   sum = sum + i;
   prod = prod * i;
-  if (Math.floor(sum / 2) === sum / 2) {
+  if (isEven(sum)) {
     print("偶数sum", sum);
   } else {
     print("奇数sum", sum);

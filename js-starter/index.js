@@ -1,4 +1,5 @@
 "use strict";
+let jsStarterVersion = "v0.8";
 
 ///////////////////////////// USER BEGIN /////////////////////////////
 let _print_msgbd = document.querySelector("#msg-board");
@@ -18,7 +19,7 @@ function print() {
     _print_scroll_counter++;
     setTimeout(() => {
         _print_scroll_counter--;
-        if(_print_scroll_counter === 0) _print_msgbd.scrollTop = _print_msgbd.scrollHeight;
+        if (_print_scroll_counter === 0) _print_msgbd.scrollTop = _print_msgbd.scrollHeight;
     }, 0);
 }
 
@@ -51,7 +52,7 @@ window.onload = () => {
         styleActiveLine: true,
         matchBrackets: true,
         gutters: ["CodeMirror-linenumbers", "breakpoints"],
-        hintOptions: {"completeSingle": false}
+        hintOptions: { "completeSingle": false }
     });
     function makeBreakpointMarker() {
         var marker = document.createElement("div");
@@ -69,21 +70,21 @@ window.onload = () => {
     });
     function ignoreToken(token) {
         let charCode = token[0].charCodeAt();
-        if(charCode >= "a".charCodeAt() && charCode <= "z".charCodeAt()) return false;
-        if(charCode >= "A".charCodeAt() && charCode <= "Z".charCodeAt()) return false;
-        if(charCode === "_".charCodeAt() || charCode === ".".charCodeAt()) return false;
+        if (charCode >= "a".charCodeAt() && charCode <= "z".charCodeAt()) return false;
+        if (charCode >= "A".charCodeAt() && charCode <= "Z".charCodeAt()) return false;
+        if (charCode === "_".charCodeAt() || charCode === ".".charCodeAt()) return false;
         return true;
     }
     let autocompleteCounter = 0;
     _maincodeEditor.on("change", function (editor, change) {
         if (change.origin == "+input") {
-            if(!ignoreToken(change.text)) {
+            if (!ignoreToken(change.text)) {
                 console.log(change.text);
                 autocompleteCounter++;
-                setTimeout(function () { 
+                setTimeout(function () {
                     autocompleteCounter--;
                     if (autocompleteCounter > 0) return;
-                    editor.execCommand("autocomplete"); 
+                    editor.execCommand("autocomplete");
                 }, 50);
             }
         };
@@ -92,7 +93,7 @@ window.onload = () => {
     document.querySelector("#maincode-run-button").disabled = false;
     document.querySelector("#debugcode-begin-button").disabled = false;
     document.querySelector("#clear-log-button").disabled = false;
-    document.querySelector("#loading-text").innerText = "v0.7";
+    document.querySelector("#loading-text").innerText = jsStarterVersion;
 
     let intervalSel = document.querySelector("#debugger-interval-select");
     let intervalUpdater = () => {
@@ -166,37 +167,86 @@ function _debugCodeGen(codes) {
     _debug_break_variable_dict = {};
     _debug_break_dedup_dict = {};
     _debug_break_lineno_dict = {};
+    let functionLevelCounter = 0;
+    function registerBreakpoint(loc) {
+        let breakPointSig = loc['start']['line'] + "-" + loc['start']['column'] +
+            "-" + loc['end']['line'] + "-" + loc['end']['column'];
+        if (breakPointSig in _debug_break_dedup_dict) return false;
+        _debug_break_dedup_dict[breakPointSig] = true;
+        _debug_break_lineno_dict[loc['start']['line']] = true;
+        return true;
+    }
+    let avoidedNodes = [];
+    function isAvoidedNodes (node) {
+        for(let i = 0; i < avoidedNodes.length; i++) {
+            if (avoidedNodes[i] === node) return true;
+        }
+        return false;
+    }
+    function addYieldBreakIfNotYet(path, t, loc, refs) {
+        if (!(registerBreakpoint(loc))) return;
+        _debug_break_variable_dict[breakCounter] = [];
+        for (let r in refs) {
+            if (path.scope.hasBinding(r)) _debug_break_variable_dict[breakCounter].push(r);
+        }
+        path.insertBefore(t.ExpressionStatement(t.yieldExpression(
+            t.callExpression(t.identifier("_debug_break"),
+                [t.numericLiteral(breakCounter),
+                t.numericLiteral(loc['start']['line']), t.numericLiteral(loc['start']['column']),
+                t.numericLiteral(loc['end']['line']), t.numericLiteral(loc['end']['column']),
+                t.arrowFunctionExpression([t.identifier("x")], t.callExpression(
+                    t.identifier("eval"), [t.identifier("x")]
+                ))])
+        )), false);
+        breakCounter++;
+    }
     function statementBreaksInjector({ types: t }) {
         return {
             visitor: {
-                ExpressionStatement(path) {
-                    let exprType = path.node.expression.type;
-                    let loc = path.node.expression.loc;
+                VariableDeclaration(path) {
+                    if (functionLevelCounter > 0) return;
+                    if (isAvoidedNodes(path.node)) return;
+                    let loc = path.node.loc;
                     if (loc === undefined) return;
-                    let breakPointSig = loc['start']['line'] + "-" + loc['start']['column'] +
-                        "-" + loc['end']['line'] + "-" + loc['end']['column'];
-                    if (breakPointSig in _debug_break_dedup_dict) return;
-                    _debug_break_dedup_dict[breakPointSig] = true;
-                    _debug_break_lineno_dict[loc['start']['line']] = true;
+                    if (path.node.kind !== 'let') return;
+                    let refs = path.hub.file.scope.references;
+                    addYieldBreakIfNotYet(path, t, loc, refs);
+                },
+                ForStatement(path) {
+                    avoidedNodes.push(path.node.init);
+                    avoidedNodes.push(path.node.update);
+                },
+                ExpressionStatement(path) {
+                    if (functionLevelCounter > 0) return;
+                    let exprType = path.node.expression.type;
+                    let loc = path.node.loc;
+                    if (loc === undefined) return;
                     let refs = path.hub.file.scope.references;
                     if (exprType === 'StringLiteral' || exprType === 'NumericLiteral') {
                         console.log("Ignored Expression Type:", exprType, ", loc: ", loc);
                     } else {
                         console.log("Visit Expression Type: ", exprType, ", loc: ", loc);
-                        _debug_break_variable_dict[breakCounter] = [];
-                        for (let r in refs) {
-                            if (path.scope.hasBinding(r)) _debug_break_variable_dict[breakCounter].push(r);
-                        }
-                        path.insertBefore(t.yieldExpression(
-                            t.callExpression(t.identifier("_debug_break"),
-                                [t.numericLiteral(breakCounter),
-                                t.numericLiteral(loc['start']['line']), t.numericLiteral(loc['start']['column']),
-                                t.numericLiteral(loc['end']['line']), t.numericLiteral(loc['end']['column']),
-                                t.arrowFunctionExpression([t.identifier("x")], t.callExpression(
-                                    t.identifier("eval"), [t.identifier("x")]
-                                ))])
-                        ), false);
-                        breakCounter++;
+                        addYieldBreakIfNotYet(path, t, loc, refs);
+                    }
+                },
+                FunctionDeclaration: {
+                    enter(path) {
+                        functionLevelCounter++;
+                        console.log("# ENTER function. LEVEL: " + functionLevelCounter);
+                    },
+                    exit(path) {
+                        functionLevelCounter--;
+                        console.log("# EXIT function. LEVEL: " + functionLevelCounter);
+                    }
+                },
+                ArrowFunctionExpression: {
+                    enter(path) {
+                        functionLevelCounter++;
+                        console.log("# ENTER arraw function. LEVEL: " + functionLevelCounter);
+                    },
+                    exit(path) {
+                        functionLevelCounter--;
+                        console.log("# EXIT arraw function. LEVEL: " + functionLevelCounter);
                     }
                 }
             }
@@ -257,7 +307,15 @@ function _debug_break_vars_display(varsvals) {
         let td1 = document.createElement("td");
         let td2 = document.createElement("td");
         td1.textContent = key;
-        td2.textContent = varsvals[key];
+        let val = varsvals[key];
+        if (typeof val === 'function') {
+            td2.style.color = "blue";
+            val = "function";
+        }
+        else if (typeof val === 'string') {
+            td2.style.color = "brown";
+        }
+        td2.textContent = val;
         tr.appendChild(td1);
         tr.appendChild(td2);
         tbody.appendChild(tr);

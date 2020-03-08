@@ -62,6 +62,10 @@ for(let i = 1; i <= a; i++) {
 let a = inputNumber("请输入a", 0);
 let sum = 0;
 
+function summer() {
+  sum = 0; 
+}
+
 for(let i = 1; i <= a; i++) {
   sum = sum + i;
   if (Math.floor(sum / 2) === sum / 2) 
