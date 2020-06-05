@@ -59,6 +59,14 @@ for(let i = 1; i <= a; i++) {
 
 ===================================
 
+let a = 2;
+
+let p0 = new Promise(function(resolve, reject){print("fuck"); reject(3);});
+
+a = a + 1;
+
+===================================
+
 let a = inputNumber("请输入a", 0);
 let sum = 0;
 

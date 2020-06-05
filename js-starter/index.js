@@ -242,11 +242,21 @@ function _debugCodeGen(codes) {
                 ArrowFunctionExpression: {
                     enter(path) {
                         functionLevelCounter++;
-                        console.log("# ENTER arraw function. LEVEL: " + functionLevelCounter);
+                        console.log("# ENTER arraw function expr. LEVEL: " + functionLevelCounter);
                     },
                     exit(path) {
                         functionLevelCounter--;
-                        console.log("# EXIT arraw function. LEVEL: " + functionLevelCounter);
+                        console.log("# EXIT arraw function expr. LEVEL: " + functionLevelCounter);
+                    }
+                },
+                FunctionExpression: {
+                    enter(path) {
+                        functionLevelCounter++;
+                        console.log("# ENTER function expr. LEVEL: " + functionLevelCounter);
+                    },
+                    exit(path) {
+                        functionLevelCounter--;
+                        console.log("# EXIT function expr. LEVEL: " + functionLevelCounter);
                     }
                 }
             }
