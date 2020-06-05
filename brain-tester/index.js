@@ -45,7 +45,7 @@
             return { "vx": vx, "vy": vy };
         }
     }
-    let maxV = 6;
+    let maxV = 5;
     function initScene(num, specNum, radius) {
         let circles = [];
         let left = radius, top = radius, right = canvas.width - radius, bottom = canvas.height - radius;
@@ -80,6 +80,7 @@
         return circles;
     }
     let repulsiveFactor = 1.0;
+    let offsetR = 10;
     function moveScene(circles) {
         for (let i = 0; i < circles.length; i++) {
             let circle = circles[i];
@@ -104,11 +105,11 @@
             for (let j = 0; j < circles.length; j++) {
                 if (j === i) continue;
                 let dis = circleDis(circles[j], circle);
-                let sumr = circle.r + circles[j].r;
-                if (dis < 2.4 * sumr) {
+                let sumr = circle.r + circles[j].r + offsetR;
+                if (dis < 2.5 * sumr) {
                     let diff = circleMinus(circles[j], circle);
-                    let dvx = repulsiveFactor * (diff.dx / dis) * Math.pow((sumr / dis), 3);
-                    let dvy = repulsiveFactor * (diff.dy / dis) * Math.pow((sumr / dis), 3);
+                    let dvx = repulsiveFactor * (diff.dx / dis) * Math.pow((sumr / dis), 2);
+                    let dvy = repulsiveFactor * (diff.dy / dis) * Math.pow((sumr / dis), 2);
                     let { vx, vy } = vecClamp(circle.vx + dvx, circle.vy + dvy, maxV);
                     circle.vx = vx;
                     circle.vy = vy;
@@ -133,11 +134,11 @@
         }
         isTesting = true;
         let frameCount = 0;
-        let circles = initScene(15, specNum, 20);
+        let circles = initScene(15, specNum, 15);
         let timer = setInterval(() => {
             if (frameCount < 60) {
                 ctxScene(circles, true);
-            } else if (frameCount < 300){
+            } else if (frameCount < 340){
                 if (frameCount % 30 === 0) updateVs(circles);
                 moveScene(circles);
                 ctxScene(circles, frameCount < 100);
@@ -157,7 +158,7 @@
                 
             }
             frameCount++;
-        }, 50);
+        }, 40);
     }
     let elems = document.getElementsByClassName("start-movcircle-btn");
     for (let i = 0; i < elems.length; i++) {
