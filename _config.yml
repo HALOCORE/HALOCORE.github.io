@@ -1,0 +1,15 @@
+title: Bo Wang
+position: Ph.D. Student
+affiliation: National University of Singapore
+email: bo_wang@u.nus.edu
+keywords: minimal academic
+google_scholar: https://scholar.google.com/citations?user=PtmkcPAAAAAJ&hl=en
+github_link: https://github.com/halocore
+linkedin: https://www.linkedin.com/in/bo-wang-756bba1b5/
+avatar: ./assets/img/avatar.jpeg
+# google_analytics: UA-111540567-4
+favicon: ./assets/img/favicon.png
+favicon_dark: ./assets/img/favicon-dark.png
+description: The homepage of Bo Wang @ SoC, NUS
+# canonical: https://minimal-light.yyliu.net/
+remote_theme: yaoyao-liu/minimal-light
