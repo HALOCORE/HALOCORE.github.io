@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<!-- A web app that displays the note names corresponding to the positions of ukulele strings -->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Ukulele</title>
+    <link rel="stylesheet" href="ukulele.css">
+</head>
+<body>
+
+<div>
+    <h1 id="header">Ukulele</h1>
+    <select id="scale-select" onchange="change_scale()">
+        <!-- choose the scale -->
+        <option value="None">None</option>
+        <option value="C4">C</option>
+        <option value="C#4">C#</option>
+        <option value="D4">D</option>
+        <option value="D#4">D#</option>
+        <option value="E4">E</option>
+        <option value="F4">F</option>
+        <option value="F#4">F#</option>
+        <option value="G4">G</option>
+        <option value="G#4">G#</option>
+        <option value="A4">A</option>
+        <option value="A#4">A#</option>
+        <option value="B4">B</option>
+    </select>
+</div>
+<div width="100%" height="100%" id="fretboard"></div>
+<script src="libs/svg/svg.js"></script>
+<script src="ukulele.js"></script>
+</body>

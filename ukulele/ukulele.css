@@ -1,0 +1,12 @@
+#fretboard {
+    border: 2px dashed gray;
+}
+
+#header {
+    display: inline-block;
+}
+
+#scale-select {
+    display: inline-block;
+    margin-left: 20px;
+}
