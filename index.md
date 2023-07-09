@@ -10,15 +10,8 @@ Before this, I received my B.S. degree in Computer Science and Technology at Uni
 
 ## Research Interests
 
-- **Program Synthesis:** Code Translation, Programming by Example
-- **Program Analysis & Transformation:** Program Repair, Bug Detection
+- **Program Synthesis:**, **Code Translation**, **Program Analysis**
 
-<!-- ## News
-
-- **[Feb. 2020]** Our paper about incremental learning is accepted to [CVPR 2020](http://cvpr2020.thecvf.com/).
-- **[Feb. 2020]** We will host the [ACM Multimedia Asia 2020](https://mmasia2020.org/) conference in Singapore!
-- **[Sept. 2019]** Our paper about few-shot learning is accepted to [NeurIPS 2019](https://nips.cc/Conferences/2019).
-- **[Mar. 2019]** Our paper about few-shot learning is accepted to [CVPR 2019](http://cvpr2019.thecvf.com/). -->
 
 ## Publications
 
@@ -45,8 +38,9 @@ Before this, I received my B.S. degree in Computer Science and Technology at Uni
   <br>
   **Bo Wang**, Yu Zhang, Jianing Geng, Xiangyang Li
 
-<!-- ## Services
+## For Fun!
 
-- Co-organizer: [ACM MM Asia 2020](https://mmasia2020.org/).
-- Conference Reviewers: [NeurIPS 2020](https://neurips.cc/Conferences/2020), and [CVPR 2020](http://cvpr2020.thecvf.com/).
-- Journal Reviewers: [T-PAMI](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=34), and [IJCV](https://www.springer.com/journal/11263). -->
+Some tools I made for fun:  
+- [Ukulele Helper](./ukulele/index.html)  
+- [Brain Tester](./brain-tester/index.html)
+- [Learn JavaScript (For Kids)](./js-starter/index.html)
