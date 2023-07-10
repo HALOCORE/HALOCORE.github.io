@@ -4,6 +4,69 @@ import AudioMotionAnalyzer from './libs/audiomotion/audioMotion-analyzer.js';
 let notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 let numbered_rel_idx = [0, 2, 4, 5, 7, 9, 11];
 let note_to_number_dict_by_scale = {};
+let note_to_frequency_dict = {};
+// assume A4 = 440 Hz
+for (let i = 1; i < 9; i++) {
+    for (let j = 0; j < 12; j++) {
+        let note = notes[j] + i;
+        let frequency = 440 * 2 ** (((i - 4) * 12 + (j - 9)) / 12);
+        note_to_frequency_dict[note] = frequency;
+    }
+}
+console.log("note_to_frequency_dict = ", note_to_frequency_dict);
+let note_to_bags_of_bar_idxes = {};
+let note_strength_dict = {};
+for (let note in note_to_frequency_dict) {
+    note_strength_dict[note] = 0;
+}
+console.log("note_strength_dict:", note_strength_dict);
+function update_notes_strength(bars) {
+    for (let note in note_strength_dict) {
+        if (note_to_bags_of_bar_idxes[note] === undefined) {
+            note_to_bags_of_bar_idxes[note] = [];
+            // find the nearest frequency
+            let min_diff = 100000;
+            let min_diff_idx = -1;
+            for (let i = 0; i < bars.length; i++) {
+                let diff = Math.abs(bars[i].freq - note_to_frequency_dict[note]);
+                if (diff < min_diff) {
+                    min_diff = diff;
+                    min_diff_idx = i;
+                }
+            }
+            note_to_bags_of_bar_idxes[note].push(min_diff_idx);
+            if (bars[min_diff_idx].freq < note_to_frequency_dict[note]) {
+                // the next bar is closer
+                note_to_bags_of_bar_idxes[note].push(min_diff_idx + 1);
+            } else {
+                // the previous bar is closer
+                note_to_bags_of_bar_idxes[note].push(min_diff_idx - 1);
+            }
+        }
+        let bag_of_bar_idxes = note_to_bags_of_bar_idxes[note];
+        let sum_var = 0;
+        for (let bar_idx of bag_of_bar_idxes) {
+            sum_var += bars[bar_idx].value[0];
+            if (bars[bar_idx].value.length > 1) throw Error("bars[bar_idx].value.length > 1");
+        }
+        // console.log(sum_var);
+        note_strength_dict[note] = sum_var / bag_of_bar_idxes.length;
+    }
+}
+
+let note_to_ukulele_circles_dict = {};
+let note_to_last_visualize_value = {};
+function visualize_notes_strength() {
+    for (let note in note_to_ukulele_circles_dict) {
+        let circles = note_to_ukulele_circles_dict[note];
+        let strength = note_strength_dict[note];
+        if (note_to_last_visualize_value[note] !== strength) {
+            for (let circle of circles) circle.attr({ 'r': 30 * (0.5 + 0.8 * (strength)) });
+        }
+        note_to_last_visualize_value[note] = strength;
+    }
+}
+
 
 function get_note_of_pos(string_idx, fret_idx) {
     // string_idx: 0, 1, 2, 3 are A, E, C, G
@@ -64,6 +127,10 @@ function analyze_bars(bars) {
     document.getElementById("summary").innerText = msg;
 }
 
+function choose_note(note) {
+    document.getElementById("chosen-note").innerText = note + "  freq = " + note_to_frequency_dict[note].toFixed(5) + " Hz";
+}
+
 function main() {
     // create a fretboard with width 100%
     let draw = SVG().addTo('#fretboard').size('100%', 200);
@@ -104,6 +171,9 @@ function main() {
                 id: elem_id,
                 fill: '#00407044', cx: x, cy: y
             });
+            let note = get_text_of_pos(i, j, false);
+            if (note_to_ukulele_circles_dict[note] === undefined) note_to_ukulele_circles_dict[note] = [];
+            note_to_ukulele_circles_dict[note].push(svg_elem_dict[elem_id]);
         }
     }
     // draw the note dots on the fretboard (one at 5th fret, 7th fret, 10th fret, 14 fret, two at 12th fret)
@@ -142,6 +212,14 @@ function main() {
                 id: elem_id,
                 fill: '#000000aa', x: x, y: y
             });
+            // add onhover event
+            svg_elem_dict[elem_id].mouseenter(function () {
+                this.fill({ color: '#00aa00ff' });
+                choose_note(note);
+            });
+            svg_elem_dict[elem_id].mouseout(function () {
+                this.fill({ color: '#000000aa' });
+            });
         }
     }
 
@@ -169,6 +247,8 @@ function main() {
                 setInterval(() => {
                     let bars = audioMotion.getBars();
                     analyze_bars(bars);
+                    update_notes_strength(bars);
+                    visualize_notes_strength();
                 }, 50);
 
             })
