@@ -6,8 +6,9 @@ let numbered_rel_idx = [0, 2, 4, 5, 7, 9, 11];
 let note_to_number_dict_by_scale = {};
 let note_to_frequency_dict = {};
 // assume A4 = 440 Hz
-for (let i = 1; i < 9; i++) {
+for (let i = 0; i < 9; i++) {
     for (let j = 0; j < 12; j++) {
+        if (i === 0 && j <= 8) continue;
         let note = notes[j] + i;
         let frequency = 440 * 2 ** (((i - 4) * 12 + (j - 9)) / 12);
         note_to_frequency_dict[note] = frequency;
@@ -55,13 +56,32 @@ function update_notes_strength(bars) {
 }
 
 let note_to_ukulele_circles_dict = {};
+let note_to_keyboard_bar_dict = {};
 let note_to_last_visualize_value = {};
 function visualize_notes_strength() {
-    for (let note in note_to_ukulele_circles_dict) {
+    for (let note in note_to_keyboard_bar_dict) {
         let circles = note_to_ukulele_circles_dict[note];
+        let bar = note_to_keyboard_bar_dict[note];
         let strength = note_strength_dict[note];
         if (note_to_last_visualize_value[note] !== strength) {
-            for (let circle of circles) circle.attr({ 'r': 30 * (0.5 + 0.8 * (strength)) });
+            if(circles) for (let circle of circles) circle.attr({ 'r': 30 * (0.5 + 0.8 * (strength)) });
+            // change color (red) of the bar
+            if (note.includes('#')) {
+                // strength = 0 -> black
+                // strength = 1 -> red
+                let red =  Math.floor(255 * (strength));;
+                let green = 0;
+                let blue = 0;
+                bar.attr({ 'fill': `rgb(${red}, ${green}, ${blue})` });
+
+            } else {
+                // strength = 0 -> white
+                // strength = 1 -> red
+                let red = 255;
+                let green = Math.floor(255 * (1 - strength));
+                let blue = Math.floor(255 * (1 - strength));
+                bar.attr({ 'fill': `rgb(${red}, ${green}, ${blue})` });
+            }
         }
         note_to_last_visualize_value[note] = strength;
     }
@@ -130,6 +150,25 @@ function analyze_bars(bars) {
 function choose_note(note) {
     document.getElementById("chosen-note").innerText = note + "  freq = " + note_to_frequency_dict[note].toFixed(5) + " Hz";
 }
+
+let white_key_notes = notes.filter(x => !x.includes('#'));
+let white_key_looped = [];
+let black_key_notes = notes.filter(x => x.includes('#'));
+let black_key_looped = [];
+for (let i = 0; i < 9; i++) {
+    white_key_looped = white_key_looped.concat(white_key_notes.map(x => x + String(i)));
+    black_key_looped = black_key_looped.concat(black_key_notes.map(x => x + String(i)));
+}
+function get_white_key_note(white_key_idx) {
+    // TODO
+    return white_key_looped[white_key_idx + 5];
+}
+
+function get_black_key_note(black_key_idx) {
+    // TODO
+    return black_key_looped[black_key_idx + 4];
+}
+
 
 function main() {
     // create a fretboard with width 100%
@@ -222,6 +261,81 @@ function main() {
             });
         }
     }
+
+    // create a keyboard with width 100%
+    let keyboard = SVG().addTo('#keyboard').size('100%', 150);
+
+    // draw a 88-key keyboard, black-key and white-key height ratio is 9:15
+    // there are 36 black keys and 52 white keys
+    let white_key_width = 100 / 52;
+    let black_key_width = white_key_width * 9 / 15;
+    let black_key_height = 100 * 9 / 15;
+    let white_key_height = 100;
+    // above values are in percentage
+    // draw white keys
+    for (let i = 0; i < 52; i++) {
+        let x = i * white_key_width + '%';
+        let y = 0;
+        let elem_id = 'white_key_' + i;
+        svg_elem_dict[elem_id] = keyboard.rect(white_key_width + '%', white_key_height + '%').attr({
+            id: elem_id,
+            fill: '#ffffff', x: x, y: y,
+            stroke: '#00000099',
+            'stroke-width': 2
+        });
+        let note = get_white_key_note(i);
+        note_to_keyboard_bar_dict[note] = svg_elem_dict[elem_id];
+        // add onhover event
+        svg_elem_dict[elem_id].mouseenter(function () {
+            this.fill({ color: '#00aa00ff' });
+            choose_note(note);
+        });
+        svg_elem_dict[elem_id].mouseout(function () {
+            this.fill({ color: '#ffffff' });
+        });
+    }
+    // draw black keys
+    function black_key_idx_to_beside_white_key_idx(black_key_idx) {
+        // this function converts black key index to the index of the white key beside it
+        // first, mod 5 to get the number of group and times 7, then add the offset
+        let group_idx = Math.floor(black_key_idx / 5);
+        let remainder = black_key_idx % 5;
+        let offset = 0;
+        if (remainder === 0) offset = 0;
+        else if (remainder === 1) offset = 2;
+        else if (remainder === 2) offset = 3;
+        else if (remainder === 3) offset = 5;
+        else if (remainder === 4) offset = 6;
+        return group_idx * 7 + offset;
+    }
+
+    for (let i = 0; i < 36; i++) {
+        // let x = (i + 1) * white_key_width - black_key_width / 2 + '%';
+        // the above x does not consider that black keys are not evenly distributed
+        let beside_white_key_idx = black_key_idx_to_beside_white_key_idx(i);
+        let x = beside_white_key_idx * white_key_width + white_key_width - black_key_width / 2 + '%';
+        let y = 0;
+        let elem_id = 'black_key_' + i;
+        svg_elem_dict[elem_id] = keyboard.rect(black_key_width + '%', black_key_height + '%').attr({
+            id: elem_id,
+            fill: '#000000', x: x, y: y,
+            stroke: '#00000099',
+            'stroke-width': 2
+        });
+        let note = get_black_key_note(i);
+        note_to_keyboard_bar_dict[note] = svg_elem_dict[elem_id];
+        // add onhover event
+        svg_elem_dict[elem_id].mouseenter(function () {
+            this.fill({ color: '#00aa00ff' });
+            choose_note(note);
+        });
+        svg_elem_dict[elem_id].mouseout(function () {
+            this.fill({ color: '#000000' });
+        });
+    }
+
+
+
 
     // draw the audio analyzer
     const audioMotion = new AudioMotionAnalyzer(

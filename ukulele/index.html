@@ -9,34 +9,36 @@
 <body>
 
 <div>
-    <h1 id="header">Ukulele</h1>
-    <select id="scale-select" onchange="change_scale()">
-        <!-- choose the scale -->
-        <option value="None">None</option>
-        <option value="C4">C</option>
-        <option value="C#4">C#</option>
-        <option value="D4">D</option>
-        <option value="D#4">D#</option>
-        <option value="E4">E</option>
-        <option value="F4">F</option>
-        <option value="F#4">F#</option>
-        <option value="G4">G</option>
-        <option value="G#4">G#</option>
-        <option value="A4">A</option>
-        <option value="A#4">A#</option>
-        <option value="B4">B</option>
-    </select>
+    <!-- <h1 id="header">Ukulele</h1> -->
+    <div id="indicator">
+        <p>
+            <select id="scale-select" onchange="change_scale()">
+                <!-- choose the scale -->
+                <option value="None">None</option>
+                <option value="C4">C</option>
+                <option value="C#4">C#</option>
+                <option value="D4">D</option>
+                <option value="D#4">D#</option>
+                <option value="E4">E</option>
+                <option value="F4">F</option>
+                <option value="F#4">F#</option>
+                <option value="G4">G</option>
+                <option value="G#4">G#</option>
+                <option value="A4">A</option>
+                <option value="A#4">A#</option>
+                <option value="B4">B</option>
+            </select>
+            <b>Chosen: </b>
+            <span id="chosen-note">......</span>
+            <b class="margin-left-10px">Mic: </b>
+            <span id="summary">......</span>
+        </p>
+    </div>
+
 </div>
-<div width="100%" height="100%" id="fretboard"></div>
+<div width="100%" id="fretboard"></div>
+<div width="100%" id="keyboard"></div> 
 <div id="audio-analyzer"></div>
-<div id="indicator">
-    <p>
-        <b>Chosen: </b>
-        <span id="chosen-note">......</span>
-        <b class="margin-left-10px">Mic: </b>
-        <span id="summary">......</span>
-    </p>
-</div>
 <script src="libs/svg/svg.js"></script>
 <script src="ukulele.js" type="module"></script>
 </body>
