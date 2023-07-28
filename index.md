@@ -18,7 +18,8 @@ Before this, I received my B.S. degree in Computer Science and Technology at Uni
   <br>
   **Bo Wang**, Ruishi Li, Mingkai Li, Prateek Saxena
   <br>
-  *[Camera-not-ready][Code-to-appear]*
+  *[Camera-not-ready]* *[Code-to-appear]*
+
 - **[OOPSLA 2023]** User-customizable Transpilation for Scripting Languages
   <br>
   **Bo Wang**, Aashish Kolluri, Teodora Baluta, Ivica Nikolić, Prateek Saxena
@@ -45,6 +46,7 @@ Before this, I received my B.S. degree in Computer Science and Technology at Uni
 ## For Fun!
 
 Some tools I made for fun:  
-- [Ukulele Helper](./ukulele/index.html)  
-- [Brain Tester](./brain-tester/index.html)
+- [Ukulele / Piano Helper](./ukulele/index.html)  
+- [Brain Tester (Test Visual Memory Capacity)](./brain-tester/index.html)
 - [Learn JavaScript (For Kids)](./js-starter/index.html)
+
