@@ -14,7 +14,11 @@ Before this, I received my B.S. degree in Computer Science and Technology at Uni
 
 
 ## Publications
-
+- **[ESEC/FSE 2023]** TransMap: Pinpointing Mistakes in Neural Code Translation
+  <br>
+  **Bo Wang**, Ruishi Li, Mingkai Li, Prateek Saxena
+  <br>
+  *[Camera-not-ready][Code-to-appear]*
 - **[OOPSLA 2023]** User-customizable Transpilation for Scripting Languages
   <br>
   **Bo Wang**, Aashish Kolluri, Teodora Baluta, Ivica Nikolić, Prateek Saxena
