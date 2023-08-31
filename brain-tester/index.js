@@ -127,14 +127,14 @@
         }
     }
     let isTesting = false;
-    function testIt(specNum) {
+    function testIt(totalNum, specNum, ballRadius) {
         if (isTesting) {
             alert("# 正在运行, 重复运行无效.");
             return;
         }
         isTesting = true;
         let frameCount = 0;
-        let circles = initScene(15, specNum, 15);
+        let circles = initScene(totalNum, specNum, ballRadius);
         let timer = setInterval(() => {
             if (frameCount < 60) {
                 ctxScene(circles, true);
@@ -161,12 +161,15 @@
         }, 40);
     }
     let elems = document.getElementsByClassName("start-movcircle-btn");
+    
     for (let i = 0; i < elems.length; i++) {
         let elem = elems[i];
-        let idx = parseInt(elem.innerText.split(" ")[1]);
         elem.addEventListener("click", () => {
+            let idx = parseInt(elem.innerText.split(" ")[1]);
+            let ballCount = parseInt(document.getElementById("input-ball-count").value);
+            let ballRadius = parseInt(document.getElementById("input-ball-radius").value);
             console.log("# 测试:", idx);
-            testIt(idx);
+            testIt(ballCount, idx, ballRadius);
         });
     }
 })();
