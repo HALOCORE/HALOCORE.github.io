@@ -135,13 +135,14 @@
         isTesting = true;
         let frameCount = 0;
         let circles = initScene(totalNum, specNum, ballRadius);
+        let interval = 20;
         let timer = setInterval(() => {
-            if (frameCount < 60) {
+            if (frameCount < 60 * 40) {
                 ctxScene(circles, true);
-            } else if (frameCount < 340){
-                if (frameCount % 30 === 0) updateVs(circles);
+            } else if (frameCount < 340 * 40){
+                if (frameCount % (30 * 40) === 0) updateVs(circles);
                 moveScene(circles);
-                ctxScene(circles, frameCount < 100);
+                ctxScene(circles, frameCount < 100 * 40);
             } else {
                 let i = Math.floor(Math.random() * circles.length);
                 circles[i].isQues = true;
@@ -157,8 +158,8 @@
                 }, 1000);
                 
             }
-            frameCount++;
-        }, 40);
+            frameCount += interval;
+        }, interval);
     }
     let elems = document.getElementsByClassName("start-movcircle-btn");
     
