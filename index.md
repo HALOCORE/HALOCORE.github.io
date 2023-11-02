@@ -10,7 +10,7 @@ Before this, I received my B.S. degree in Computer Science and Technology at Uni
 
 ## Research Interests
 
-- **Program Synthesis:**, **Code Translation**, **Program Analysis**
+- **Program Synthesis**, **Code Translation**, **Program Analysis**, **Large Language Model**
 
 
 ## Publications
@@ -18,7 +18,7 @@ Before this, I received my B.S. degree in Computer Science and Technology at Uni
   <br>
   **Bo Wang**, Ruishi Li, Mingkai Li, Prateek Saxena
   <br>
-  *[Camera-not-ready]* *[Code-to-appear]*
+  *[Camera-not-ready]* [[Code](https://github.com/HALOCORE/TransMap)]
 
 - **[OOPSLA 2023]** User-customizable Transpilation for Scripting Languages
   <br>
