@@ -18,7 +18,7 @@ Before this, I received my B.S. degree in Computer Science and Technology at Uni
   <br>
   **Bo Wang**, Ruishi Li, Mingkai Li, Prateek Saxena
   <br>
-  *[Camera-not-ready]* [[Code](https://github.com/HALOCORE/TransMap)]
+  [[Paper](./assets/pdf/transmap_authorversion.pdf)] [[Code](https://github.com/HALOCORE/TransMap)]
 
 - **[OOPSLA 2023]** User-customizable Transpilation for Scripting Languages
   <br>
